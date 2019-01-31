@@ -33,7 +33,7 @@ namespace DatingApp.API.Controllers
             return Ok(usersToReturn);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id}", Name="GetUser")]
         public async Task<IActionResult> GetUser(int id)
         {
             var user = await _repo.GetUser(id);
@@ -44,8 +44,8 @@ namespace DatingApp.API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(int id, UserForUpdatesDto userForUpdateDto) 
         {
-            //da li isti user koji je ulogovan hoce da pristupi ovoj ruti
-            //ulogovani korisnik moze da mijenja samo svoj profil
+            // da li isti user koji je ulogovan hoce da pristupi ovoj ruti
+            // ulogovani korisnik moze da mijenja samo svoj profil
             if(id != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value))
             {
                 return Unauthorized();
