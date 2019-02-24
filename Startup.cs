@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -35,7 +36,8 @@ namespace DatingApp.API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<DataContext>(x => x.UseSqlServer(Configuration.GetConnectionString("Default")));
+            services.AddDbContext<DataContext>(x => x.UseSqlServer(Configuration.GetConnectionString("Default"))
+                                                    .ConfigureWarnings(warnings => warnings.Ignore(CoreEventId.IncludeIgnoredWarning)));
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
                             .AddJsonOptions(opt => {
                                 opt.SerializerSettings.ReferenceLoopHandling = 
@@ -64,6 +66,10 @@ namespace DatingApp.API
                     });
             services.AddScoped<LogUserActivity>();
         }
+
+        // public void ConfigureDevelopmentServices() etc etc....
+        //we can define services for Dev in separate function, and even use different database provider
+        //in dev and prod mode 
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, Seed seeder)
@@ -99,7 +105,17 @@ namespace DatingApp.API
             app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
             //always before mvc, mvc the last one
             app.UseAuthentication();
-            app.UseMvc();
+            app.UseDefaultFiles();
+            //this tells to look for index or default files
+            app.UseStaticFiles();
+            //look for the files inside wwroot folder
+            app.UseMvc(routes => {
+                //in order to configure routes btw api and spa, cause they are different
+                routes.MapSpaFallbackRoute(
+                    name: "spa-fallback",
+                    defaults: new {controller = "Fallback", action ="Index"}
+                );
+            });
             
         }
     }
